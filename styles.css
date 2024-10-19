@@ -1,8 +1,57 @@
-/*
+.task-item {
+	display: flex;
+	align-items: center;
+	margin: 5px 0;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.task-checkbox {
+	margin-right: 10px;
+}
 
-If your plugin does not need CSS, delete this file.
+.task-text {
+	font-size: var(--font-text-size);
+}
 
-*/
+.task-completed {
+	/* text-decoration: line-through; */
+	color: gray;
+}
+
+.search-container {
+	display: flex;
+	align-items: center;
+	margin-bottom: 10px;
+}
+
+.completed-tasks-checkbox {
+	margin-right: 10px;
+}
+
+.link {
+	text-decoration: underline;
+	color: inherit;
+}
+
+.task-search-modal {
+	background-color: var(--modal-background);
+	border-radius: 0px;
+	padding: 10px;
+}
+
+.task-search-modal .search-container {
+	margin-bottom: 5px;
+}
+
+.task-search-modal .task-item {
+	margin: 5px 0;
+}
+
+.full-width-input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.task-count-label {
+	color: gray;
+	margin-left: 10px;
+}
