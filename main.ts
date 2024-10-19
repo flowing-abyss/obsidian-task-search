@@ -14,11 +14,6 @@ class TaskSearchModal extends Modal {
 	private taskCountLabel: HTMLElement;
 	public app: App;
 
-	constructor(app: App) {
-		super(app);
-		this.app = app;
-	}
-
 	onOpen() {
 		const { contentEl, modalEl } = this;
 		modalEl.querySelector(".modal-close-button")?.remove();
