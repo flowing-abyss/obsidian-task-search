@@ -34,10 +34,10 @@ class TaskSearchModal extends Modal {
 		});
 		this.completedTasksCheckbox.setAttribute(
 			"id",
-			"completed-tasks-checkbox",
+			"completed-tasks-checkbox"
 		);
 		this.completedTasksCheckbox.addEventListener("change", () =>
-			this.searchTasks(),
+			this.searchTasks()
 		);
 
 		const checkboxLabel = searchContainer.createEl("label");
@@ -108,11 +108,15 @@ class TaskSearchModal extends Modal {
 				.replace(/#\S+/g, "")
 				.replace(
 					/\[([^\]]+)\]\(([^)]+)\)/g,
-					"🌐 <span class='link'> $1 </span>",
+					"🌐 <span class='link'> $1 </span>"
+				)
+				.replace(
+					/\[\[([^\|]+)\|([^\]]+)\]\]/g,
+					"🔗 <span class='link'> $2 </span>"
 				)
 				.replace(
 					/\[\[([^\]]+)\]\]/g,
-					"🔗 <span class='link'> $1 </span>",
+					"🔗 <span class='link'> $1 </span>"
 				);
 
 			const taskText = taskElement.createEl("span", {
@@ -131,7 +135,7 @@ class TaskSearchModal extends Modal {
 				task.completed = checkbox.checked;
 
 				const file = this.app.vault.getAbstractFileByPath(
-					task.filePath,
+					task.filePath
 				);
 				if (file instanceof TFile) {
 					const content = await this.app.vault.read(file);
@@ -156,20 +160,20 @@ class TaskSearchModal extends Modal {
 
 			taskElement.addEventListener("click", async () => {
 				const file = this.app.vault.getAbstractFileByPath(
-					task.filePath,
+					task.filePath
 				);
 				if (file instanceof TFile) {
 					await this.app.workspace.openLinkText(
 						file.path,
 						file.path,
-						false,
+						false
 					);
 					this.close();
 
 					setTimeout(() => {
 						const editor =
 							this.app.workspace.getActiveViewOfType(
-								MarkdownView,
+								MarkdownView
 							)?.editor;
 						if (editor) {
 							editor.setCursor({
