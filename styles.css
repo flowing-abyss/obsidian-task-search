@@ -15,6 +15,7 @@
 
 .task-completed {
 	/* text-decoration: line-through; */
+	font-size: var(--font-text-size);
 	color: gray;
 }
 
