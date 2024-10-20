@@ -2,7 +2,11 @@
 	display: flex;
 	align-items: center;
 	margin: 5px 0;
-	border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.task-item.selected {
+	background: rgba(64, 64, 64, 0.3);
+	border-radius: 3px;
 }
 
 .task-checkbox {
