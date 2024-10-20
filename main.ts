@@ -12,6 +12,9 @@ class TaskSearchModal extends Modal {
 	private completedTasksCheckbox: HTMLInputElement;
 	private resultsContainer: HTMLElement;
 	private taskCountLabel: HTMLElement;
+	private selectedTaskIndex: number = -1;
+	private tasks: Task[] = [];
+	private filteredTasks: Task[] = [];
 	public app: App;
 
 	onOpen() {
@@ -45,18 +48,34 @@ class TaskSearchModal extends Modal {
 		});
 		this.input.addEventListener("input", () => this.searchTasks());
 
-		this.taskCountLabel = searchContainer.createEl("div", {
-			cls: "task-count-label",
-			text: "0 tasks",
-		});
-
 		this.input.addEventListener("keydown", (event) => {
 			if (event.ctrlKey && (event.key === "l" || event.code === "KeyL")) {
 				event.preventDefault();
 				this.completedTasksCheckbox.checked =
 					!this.completedTasksCheckbox.checked;
 				this.searchTasks();
+			} else if (
+				event.key === "ArrowDown" ||
+				(event.ctrlKey && event.code === "KeyJ")
+			) {
+				event.preventDefault();
+				this.selectNextTask();
+			} else if (
+				event.key === "ArrowUp" ||
+				(event.ctrlKey && event.code === "KeyK")
+			) {
+				event.preventDefault();
+				this.selectPreviousTask();
+			} else if (event.key === "Enter") {
+				event.preventDefault();
+				event.stopPropagation();
+				this.openSelectedTask();
 			}
+		});
+
+		this.taskCountLabel = searchContainer.createEl("div", {
+			cls: "task-count-label",
+			text: "0 tasks",
 		});
 
 		this.resultsContainer = contentEl.createEl("div");
@@ -76,11 +95,13 @@ class TaskSearchModal extends Modal {
 		if (query.trim() === "") {
 			this.resultsContainer.empty();
 			this.taskCountLabel.setText("0 tasks");
+			this.selectedTaskIndex = -1;
+			this.filteredTasks = [];
 			return;
 		}
 
-		const tasks = await this.getTasks();
-		const filteredTasks = tasks.filter((task) => {
+		this.tasks = await this.getTasks();
+		this.filteredTasks = this.tasks.filter((task) => {
 			const matchesText = task.text.toLowerCase().includes(query);
 			const matchesCompleted = includeCompleted
 				? task.completed
@@ -88,13 +109,15 @@ class TaskSearchModal extends Modal {
 			return matchesText && matchesCompleted;
 		});
 
-		this.renderResults(filteredTasks);
-		this.taskCountLabel.setText(`${filteredTasks.length} tasks`);
+		this.renderResults(this.filteredTasks);
+		this.taskCountLabel.setText(`${this.filteredTasks.length} tasks`);
+		this.selectedTaskIndex = this.filteredTasks.length > 0 ? 0 : -1;
+		this.highlightSelectedTask();
 	}
 
 	private renderResults(tasks: Task[]) {
 		this.resultsContainer.empty();
-		tasks.forEach((task) => {
+		tasks.forEach((task, index) => {
 			const taskElement = this.resultsContainer.createEl("div", {
 				cls: "task-item",
 			});
@@ -154,37 +177,70 @@ class TaskSearchModal extends Modal {
 			});
 
 			taskElement.addEventListener("click", async () => {
-				const file = this.app.vault.getAbstractFileByPath(
-					task.filePath
-				);
-				if (file instanceof TFile) {
-					await this.app.workspace.openLinkText(
-						file.path,
-						file.path,
-						false
-					);
-					this.close();
-
-					setTimeout(() => {
-						const editor =
-							this.app.workspace.getActiveViewOfType(
-								MarkdownView
-							)?.editor;
-						if (editor) {
-							editor.setCursor({
-								line: task.lineNumber - 1,
-								ch: task.text.length,
-							});
-							editor.focus();
-						}
-					}, 100);
-				} else {
-					console.error("File not found:", task.filePath);
-				}
+				this.selectedTaskIndex = index;
+				this.openSelectedTask();
 			});
 
 			taskElement.prepend(checkbox);
 		});
+	}
+
+	private highlightSelectedTask() {
+		const taskItems = this.resultsContainer.querySelectorAll(".task-item");
+		taskItems.forEach((item, index) => {
+			item.toggleClass("selected", index === this.selectedTaskIndex);
+		});
+	}
+
+	private selectNextTask() {
+		if (this.filteredTasks.length === 0) return;
+
+		this.selectedTaskIndex =
+			(this.selectedTaskIndex + 1) % this.filteredTasks.length;
+		this.highlightSelectedTask();
+	}
+
+	private selectPreviousTask() {
+		if (this.filteredTasks.length === 0) return;
+
+		this.selectedTaskIndex =
+			(this.selectedTaskIndex - 1 + this.filteredTasks.length) %
+			this.filteredTasks.length;
+		this.highlightSelectedTask();
+	}
+
+	private async openSelectedTask() {
+		if (
+			this.selectedTaskIndex >= 0 &&
+			this.selectedTaskIndex < this.filteredTasks.length
+		) {
+			const task = this.filteredTasks[this.selectedTaskIndex];
+			const file = this.app.vault.getAbstractFileByPath(task.filePath);
+			if (file instanceof TFile) {
+				await this.app.workspace.openLinkText(
+					file.path,
+					file.path,
+					false
+				);
+				this.close();
+
+				setTimeout(() => {
+					const editor =
+						this.app.workspace.getActiveViewOfType(
+							MarkdownView
+						)?.editor;
+					if (editor) {
+						editor.setCursor({
+							line: task.lineNumber - 1,
+							ch: task.text.length,
+						});
+						editor.focus();
+					}
+				}, 100);
+			} else {
+				console.error("File not found:", task.filePath);
+			}
+		}
 	}
 
 	private async getTasks(): Promise<Task[]> {
