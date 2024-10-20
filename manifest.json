@@ -1,7 +1,7 @@
 {
 	"id": "task-search",
 	"name": "Task Search",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"minAppVersion": "0.15.0",
 	"description": "The plugin allows task search via a modal window.",
 	"author": "flowing-abyss",
