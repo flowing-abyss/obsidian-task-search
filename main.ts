@@ -5,6 +5,7 @@ interface Task {
 	completed: boolean;
 	filePath: string;
 	lineNumber: number;
+	isSubtask: boolean;
 }
 
 class TaskSearchModal extends Modal {
@@ -157,7 +158,7 @@ class TaskSearchModal extends Modal {
 	private createTaskText(task: Task): HTMLElement {
 		const taskText = document.createElement("span");
 		taskText.className = task.completed ? "task-completed" : "task-text";
-		taskText.innerHTML = this.formatTaskText(task.text);
+		taskText.innerHTML = this.formatTaskText(task.text, task.isSubtask);
 		return taskText;
 	}
 
@@ -174,19 +175,26 @@ class TaskSearchModal extends Modal {
 		return checkbox;
 	}
 
-	private formatTaskText(text: string): string {
-		return text
-			.replace(/#\S+/g, "")
-			.replace(
-				/\[([^\]]+)\]\(([^)]+)\)/g,
-				"🌐 <span class='link'> $1 </span>"
-			)
-			.replace(
-				/\[\[([^\|]+)\|([^\]]+)\]\]/g,
-				"🔗 <span class='link'> $2 </span>"
-			)
-			.replace(/\[\[([^\]]+)\]\]/g, "🔗 <span class='link'> $1 </span>")
-			.trim();
+	private formatTaskText(text: string, isSubtask: boolean): string {
+		const subtaskIndicator = isSubtask ? "⤵ " : "";
+		return (
+			subtaskIndicator +
+			text
+				.replace(/#\S+/g, "")
+				.replace(
+					/\[([^\]]+)\]\(([^)]+)\)/g,
+					"🌐 <span class='link'> $1 </span>"
+				)
+				.replace(
+					/\[\[([^\|]+)\|([^\]]+)\]\]/g,
+					"🔗 <span class='link'> $2 </span>"
+				)
+				.replace(
+					/\[\[([^\]]+)\]\]/g,
+					"🔗 <span class='link'> $1 </span>"
+				)
+				.trim()
+		);
 	}
 
 	private async handleTaskCompletion(event: Event, task: Task) {
@@ -210,12 +218,10 @@ class TaskSearchModal extends Modal {
 	private updateTaskInContent(content: string, task: Task): string {
 		const lines = content.split("\n");
 		lines[task.lineNumber - 1] = task.completed
-			? lines[task.lineNumber - 1].replace(/^\s*-\s*\[ \]/, "- [x]")
-			: lines[task.lineNumber - 1].replace(/^\s*-\s*\[x\]/, "- [ ]");
+			? lines[task.lineNumber - 1].replace(/^(\s*)-\s*\[ \]/, "$1- [x]")
+			: lines[task.lineNumber - 1].replace(/^(\s*)-\s*\[x\]/, "$1- [ ]");
 		return lines.join("\n");
 	}
-
-	// ... existing code ...
 
 	private async getTasks(): Promise<void> {
 		this.tasks = [];
@@ -234,15 +240,19 @@ class TaskSearchModal extends Modal {
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
-			const isCompleted = line.startsWith("- [x]");
-			const isTask = line.startsWith("- [ ]") || isCompleted;
+			const isCompleted = /^\s*-\s*\[x\]/.test(line);
+			const isTask = /^\s*-\s*\[ \]/.test(line) || isCompleted;
 
 			if (isTask) {
+				const leadingSpaces = line.match(/^\s*/)?.[0]?.length || 0;
+				const isSubtask = leadingSpaces > 0;
+
 				tasks.push({
 					text: line.replace(/^\s*-\s*\[x\]|\s*-\s*\[ \]/, "").trim(),
 					completed: isCompleted,
 					filePath: file.path,
 					lineNumber: i + 1,
+					isSubtask: isSubtask,
 				});
 			}
 		}
