@@ -144,9 +144,11 @@ class TaskSearchModal extends Modal {
 		taskElement.appendChild(checkbox);
 		taskElement.appendChild(taskText);
 
-		taskElement.addEventListener("click", () => {
-			this.selectedTaskIndex = index;
-			this.openSelectedTask();
+		taskElement.addEventListener("click", (event) => {
+			if ((event.target as HTMLElement).className !== "task-checkbox") {
+				this.selectedTaskIndex = index;
+				this.openSelectedTask();
+			}
 		});
 
 		return taskElement;
@@ -201,6 +203,8 @@ class TaskSearchModal extends Modal {
 
 		const taskText = checkbox.nextElementSibling as HTMLElement;
 		taskText.className = task.completed ? "task-completed" : "task-text";
+
+		this.renderResults();
 	}
 
 	private updateTaskInContent(content: string, task: Task): string {
